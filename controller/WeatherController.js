@@ -8,11 +8,15 @@ export class WeatherController {
         this.view = new WeatherView();
     }
 
-    getWeather(query) {
-        this.model.getWeatherData(query, this.onWeatherDataReceived.bind(this));
+    async getWeather(query, errorCallback) {
+        this.model.getWeatherData(query, this.onWeatherDataReceived.bind(this), errorCallback);
     }
 
     onWeatherDataReceived(data) {
         this.view.setWeatherData(data);
+    }
+
+    async tearDown() {
+        await this.model.tearDown();
     }
 }

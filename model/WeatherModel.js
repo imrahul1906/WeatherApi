@@ -6,7 +6,7 @@ export class WeatherModel {
         this.cache = cache;
     }
 
-    async getWeatherData(query, callback) {
+    async getWeatherData(query, callback, errorCallback) {
         // Check if the data is present in cache.
         const location = query.location;
         const from = query.from;
@@ -32,8 +32,20 @@ export class WeatherModel {
             await this.cache.set(key, JSON.stringify(response.data));
             callback(response.data);
         } catch (error) {
-            console.log(`api request was not successful ${error}`);
-            throw new Error(error);
+            const responseCode = error.response.status;
+            console.log(`Error code : ${responseCode}`)
+            if (responseCode == 400) {
+                console.log('❌ The format of the API is incorrect or an invalid parameter or combination of parameters was supplied');
+            } else if (responseCode == 401) {
+                console.log('❌ There is a problem with the API key, account or subscription. May also be returned if a feature is requested for which the account does not have access to.')
+            } else if (responseCode == 404) {
+                console.log('❌ The request cannot be matched to any valid API request endpoint structure.');
+            } else if (responseCode == 429) {
+                console.log('❌ The account has exceeded their assigned limits. See What is the cause of “Maximum concurrent jobs has been exceeded”, HTTP response 429');
+            } else if (responseCode == 500) {
+                console.log('❌ A general error has occurred processing the request.')
+            }
+            errorCallback();
         }
     }
 
@@ -44,5 +56,9 @@ export class WeatherModel {
 
         const key = `${location}:${dates.join(':')}`;
         return key;
+    }
+
+    async tearDown() {
+        await this.cache.tearDown();
     }
 }

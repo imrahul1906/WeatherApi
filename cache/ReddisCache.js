@@ -22,4 +22,9 @@ export class ReddisCache {
     get(key) {
         return this.redisClient.get(key);
     }
+
+    async tearDown() {
+        await this.redisClient.quit();
+        console.log('🛑 Redis Client stopped');
+    }
 }

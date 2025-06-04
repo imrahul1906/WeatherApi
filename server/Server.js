@@ -22,19 +22,21 @@ export class Server {
 
     setRoutes() {
         this.app.get('/weather', (req, res) => {
-            this.controller.getWeather(req.query);
+            this.controller.getWeather(req.query, async () => {
+                await this.tearDown();
+            });
         });
     }
 
     async startServer() {
-        this.app.listen(3000, '0.0.0.0', async () => {
+        this.server = this.app.listen(3000, '0.0.0.0', async () => {
             console.log(`✅server is starting ...`);
 
             try {
                 const config = servrConfig(
                     this.options.location,
                     'http://127.0.0.1',
-                    this.port,
+                    3000,
                     this.options.from,
                     this.options.to
                 );
@@ -48,5 +50,10 @@ export class Server {
         this.app.on('error', (error) => {
             console.log(`error in connecting with server: ${error}`)
         })
+    }
+
+    async tearDown() {
+        await this.controller.tearDown();
+        process.exit(1);
     }
 }

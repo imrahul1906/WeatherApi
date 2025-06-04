@@ -42,7 +42,6 @@ program
             const server = new Server(options);
             await server.init();
             await server.startServer();
-
         } catch (e) {
             console.log(`Could not initialize command: ${e}`);
         }

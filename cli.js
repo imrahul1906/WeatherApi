@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import figlet from "figlet";
-import { WeatherController } from "./controller/WeatherController.js";
+import { Server } from "./server/Server.js";
 
 const program = new Command();
 
@@ -37,10 +37,12 @@ program
     .option('--from <string>', 'from date in yyyy-MM-dd format ')
     .option('--to <string>', 'to date in yyyy-MM-dd format')
     .requiredOption('-l, --location <string>', 'Location for which weather data is needed')
-    .action((options) => {
+    .action(async (options) => {
         try {
-            const controller = new WeatherController();
-            controller.getWeather(options);
+            const server = new Server(options);
+            await server.init();
+            await server.startServer();
+
         } catch (e) {
             console.log(`Could not initialize command: ${e}`);
         }

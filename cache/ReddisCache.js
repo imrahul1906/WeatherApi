@@ -15,10 +15,6 @@ export class ReddisCache {
         console.log("✅ Connected to Redis");
     }
 
-    async init() {
-        await this.redisClient.connect();
-    }
-
     set(key, value) {
         this.redisClient.set(key, value);
     }

@@ -6,7 +6,7 @@ export class WeatherModel {
         this.cache = cache;
     }
 
-    async getWeatherData(query, callback, errorCallback) {
+    async getWeatherData(query, res, callback, errorCallback) {
         // Check if the data is present in cache.
         const location = query.location;
         const from = query.from;
@@ -18,6 +18,8 @@ export class WeatherModel {
             console.log('✅ X-Cache: HIT\n');
             // Redis stores string not json object
             callback(JSON.parse(cachedData));
+            // [Optional] send the data back to client .
+            res.send(cachedData);
             return;
         }
 
@@ -30,6 +32,7 @@ export class WeatherModel {
             console.log('❌ X-Cache: MISS \n');
             // set data to cache. Redis stores strings.
             await this.cache.set(key, JSON.stringify(response.data));
+            res.send(response.data);
             callback(response.data);
         } catch (error) {
             const responseCode = error.response.status;

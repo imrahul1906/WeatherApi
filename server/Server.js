@@ -3,6 +3,7 @@ import { WeatherController } from "../controller/WeatherController.js";
 import axios from "axios";
 import { servrConfig } from "../config/SelfServerConfig.js";
 import { ReddisCache } from "../cache/ReddisCache.js";
+import rateLimit from 'express-rate-limit';
 
 export class Server {
     constructor(options) {
@@ -11,6 +12,9 @@ export class Server {
     }
 
     async init() {
+        this.setRateLimiter()
+
+
         // init cache
         const cache = new ReddisCache();
         await cache.connect();
@@ -20,9 +24,21 @@ export class Server {
         this.setRoutes();
     }
 
+    setRateLimiter() {
+        // Limit each IP to 4 requests per minutes
+        const limiter = rateLimit({
+            windowMs: 1 * 60 * 1000,
+            max: 4,
+            message: 'Too many requests from this IP, please try again later.',
+        });
+
+        // Apply rate limiter to only '/weather' route.
+        this.app.use('/weather', limiter);
+    }
+
     setRoutes() {
         this.app.get('/weather', (req, res) => {
-            this.controller.getWeather(req.query, async () => {
+            this.controller.getWeather(req.query, res, async () => {
                 await this.tearDown();
             });
         });

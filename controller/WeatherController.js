@@ -11,19 +11,13 @@ export class WeatherController {
     async getWeather(request, response) {
         const data = await this.model.getWeather(request);
 
-        if (!data) {
-            return response.status(404).json({
-                success: false,
-                message: "Cache miss",
-                data: null
+        if (data) {
+            return response.status(200).json({
+                success: true,
+                message: "Weather data is fetched successfully~",
+                data
             });
         }
-
-        return response.status(200).json({
-            success: true,
-            message: "Cache hit",
-            data
-        });
     }
 
     onWeatherDataReceived(data) {

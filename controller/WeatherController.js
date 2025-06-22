@@ -8,15 +8,25 @@ export class WeatherController {
         this.view = new WeatherView();
     }
 
-    async getWeather(query, res, errorCallback) {
-        this.model.getWeatherData(query, res, this.onWeatherDataReceived.bind(this), errorCallback);
+    async getWeather(request, response) {
+        const data = await this.model.getWeather(request);
+
+        if (!data) {
+            return response.status(404).json({
+                success: false,
+                message: "Cache miss",
+                data: null
+            });
+        }
+
+        return response.status(200).json({
+            success: true,
+            message: "Cache hit",
+            data
+        });
     }
 
     onWeatherDataReceived(data) {
         this.view.setWeatherData(data);
-    }
-
-    async tearDown() {
-        await this.model.tearDown();
     }
 }

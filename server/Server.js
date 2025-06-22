@@ -1,7 +1,5 @@
 import express from "express"
 import { WeatherController } from "../controller/WeatherController.js";
-import axios from "axios";
-import { servrConfig } from "../config/SelfServerConfig.js";
 import { ReddisCache } from "../cache/ReddisCache.js";
 import rateLimit from 'express-rate-limit';
 
@@ -13,7 +11,6 @@ export class Server {
 
     async init() {
         this.setRateLimiter()
-
 
         // init cache
         const cache = new ReddisCache();
@@ -38,38 +35,17 @@ export class Server {
 
     setRoutes() {
         this.app.get('/weather', (req, res) => {
-            this.controller.getWeather(req.query, res, async () => {
-                await this.tearDown();
-            });
+            this.controller.getWeather(req, res);
         });
     }
 
     async startServer() {
-        this.server = this.app.listen(3000, '0.0.0.0', async () => {
+        this.server = this.app.listen(3000, '0.0.0.0', () => {
             console.log(`✅server is starting ...`);
-
-            try {
-                const config = servrConfig(
-                    this.options.location,
-                    'http://127.0.0.1',
-                    3000,
-                    this.options.from,
-                    this.options.to
-                );
-                const response = await axios(config);
-                console.log(`my server response is : ${response.status}`);
-            } catch (e) {
-                throw new Error(e);
-            }
         });
 
         this.app.on('error', (error) => {
             console.log(`error in connecting with server: ${error}`)
         })
-    }
-
-    async tearDown() {
-        await this.controller.tearDown();
-        process.exit(1);
     }
 }

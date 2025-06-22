@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import figlet from "figlet";
 import { Server } from "./server/Server.js";
+import { AxiosClient } from "./AxiosClient.js";
 
 const program = new Command();
 
@@ -42,6 +43,9 @@ program
             const server = new Server(options);
             await server.init();
             await server.startServer();
+
+            const client = new AxiosClient(options);
+            await client.getWeather();
         } catch (e) {
             console.log(`Could not initialize command: ${e}`);
         }

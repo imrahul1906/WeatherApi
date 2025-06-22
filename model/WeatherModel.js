@@ -6,34 +6,26 @@ export class WeatherModel {
         this.cache = cache;
     }
 
-    async getWeatherData(query, res, callback, errorCallback) {
-        // Check if the data is present in cache.
-        const location = query.location;
-        const from = query.from;
-        const to = query.to;
-
-        const key = this.getKey(location, from, to);
+    async getWeatherFromCache(key) {
         const cachedData = await this.cache.get(key);
         if (cachedData) {
             console.log('✅ X-Cache: HIT\n');
-            // Redis stores string not json object
-            callback(JSON.parse(cachedData));
-            // [Optional] send the data back to client .
-            res.send(cachedData);
-            return;
+        } else {
+            console.log('❌ X-Cache: MISS \n');
         }
 
+        return cachedData ? JSON.parse(cachedData) : null;
+    }
+
+    async fetchWeatherData(location, from, to, key) {
         // make a request to third party id data is not cached
         const path = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${location}`;
         try {
             const config = requestConfig(path, from, to);
-
             const response = await axios(config);
-            console.log('❌ X-Cache: MISS \n');
             // set data to cache. Redis stores strings.
             await this.cache.set(key, JSON.stringify(response.data));
-            res.send(response.data);
-            callback(response.data);
+            return response.data;
         } catch (error) {
             const responseCode = error.response.status;
             console.log(`Error code : ${responseCode}`)
@@ -48,8 +40,24 @@ export class WeatherModel {
             } else if (responseCode == 500) {
                 console.log('❌ A general error has occurred processing the request.')
             }
-            errorCallback();
         }
+    }
+
+    async getWeather(request) {
+        // Check if the data is present in cache.
+        const location = request.query.location;
+        const from = request.query.from;
+        const to = request.query.to;
+        const key = this.getKey(location, from, to);
+
+        let data = await this.getWeatherFromCache(key);
+
+        if (data) {
+            return data;
+        }
+
+        data = await this.fetchWeatherData(location, from, to, key);
+        return data;
     }
 
     getKey(location, from, to) {
@@ -59,9 +67,5 @@ export class WeatherModel {
 
         const key = `${location}:${dates.join(':')}`;
         return key;
-    }
-
-    async tearDown() {
-        await this.cache.tearDown();
     }
 }
